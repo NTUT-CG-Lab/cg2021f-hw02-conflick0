@@ -26,6 +26,7 @@
 		Copyright
 		<a href="https://sites.google.com/view/evpvp/" target="_blank" rel="noopener">Model Data</a>
 		<a href="http://seiga.nicovideo.jp/seiga/im5162984" target="_blank" rel="noopener">Pose Data</a>
+		<div id="evalBtn"></div>
 	</div>
 
 	<script src="js/libs/ammo.wasm.js"></script>
@@ -45,7 +46,7 @@
 			//有幾個項目就呼叫幾個 addChild
 			//addChild 要比 renderModal 先呼叫
 			so.addChild("視角可以移動及放大", 2, true);
-			so.addChild("在畫面上畫出左眼的邊框", 2, false);
+			so.addChild("在畫面上畫出左眼的邊框", 2, true);
 			so.addChild("複製左眼邊框變化到右眼", 2, false);
 			so.addChild("可選擇當前讀取角色或按鍵選擇上 / 下一隻角色", 1, false);
 			so.addChild("可儲存座標點檔案", 1, false);
@@ -73,7 +74,7 @@
 			//產生 "開啟自評表按鈕"
 			so.renderBtn(
 				//自評表按鈕插入位置
-				document.body,
+				document.querySelector('#evalBtn'),
 				//自評表按鈕文字
 				"開啟自評表"
 			);
@@ -92,6 +93,14 @@
 		let mesh, helper;
 
 		const vpds = [];
+
+        let raycaster = new THREE.Raycaster();
+        let mouse = new THREE.Vector2();
+        let plane = new THREE.Plane();
+        let planeNormal = new THREE.Vector3();
+        let point = new THREE.Vector3();
+
+		let lines = [null, null, null, null];
 
 		Ammo().then(function (AmmoLib) {
 
@@ -204,6 +213,8 @@
 			//
 
 			window.addEventListener('resize', onWindowResize);
+            window.addEventListener('keydown', onKeyDown);
+            window.addEventListener( 'mousemove', onMouseMove);
 			//鏡頭控制
 			const cameracontrols = new OrbitControls(camera, renderer.domElement);
 			cameracontrols.minDistance = 10;
@@ -334,6 +345,110 @@
 			effect.setSize(window.innerWidth, window.innerHeight);
 
 		}
+
+        function onMouseMove( event ) {
+            event.preventDefault();
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            planeNormal.copy(camera.position).normalize();
+            plane.setFromNormalAndCoplanarPoint(planeNormal, scene.position);
+            raycaster.setFromCamera(mouse, camera);
+            raycaster.ray.intersectPlane(plane, point);
+        }
+
+        function onKeyDown(event) {
+			let id;
+			switch (event.keyCode) {
+				case 49:
+					// key 1
+					id = 0;
+					if (lines[id]) removeLine(id);
+					addHorizontalLine(id);
+					break;
+				case 50:
+					// key 2
+					id = 1;
+					if (lines[id]) removeLine(id);
+					addVerticalLine(id);
+					break;
+				case 51:
+					// key 3
+					id = 2;
+					if (lines[id]) removeLine(id);
+					addHorizontalLine(id);
+					break;
+				case 52:
+					// key 4
+					id = 3;
+					if (lines[id]) removeLine(id);
+					addVerticalLine(id);
+					break;
+				case 97:
+					// key 1 (numeric keypad area)
+					id = 0;
+					if (lines[id]) removeLine(id);
+					addHorizontalLine(id);
+					break;
+				case 98:
+					// key 2 (numeric keypad area)
+					id = 1;
+					if (lines[id]) removeLine(id);
+					addVerticalLine(id);
+					break;
+				case 99:
+					// key 3 (numeric keypad area)
+					id = 2;
+					if (lines[id]) removeLine(id);
+					addHorizontalLine(id);
+					break;
+				case 100:
+					// key 4 (numeric keypad area)
+					id = 3;
+					if (lines[id]) removeLine(id);
+					addVerticalLine(id);
+					break;
+
+			}
+        }
+
+		function removeLine(lineId) {
+			lines[lineId].geometry.dispose();
+			lines[lineId].material.dispose();
+			scene.remove(lines[lineId]);
+			lines[lineId] = null;
+		}
+
+        function addHorizontalLine(lineId) {
+            const material = new THREE.LineBasicMaterial({
+                color: 0xff0000
+            });
+
+            let lineLength = 1;
+            let line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(point.x, point.y - lineLength, 2),
+                new THREE.Vector3(point.x, point.y + lineLength, 2)
+            ]), material);
+
+			lines[lineId] = line;
+			scene.add(line);
+        }
+
+        function addVerticalLine(lineId) {
+            const material = new THREE.LineBasicMaterial({
+                color: 0x00ff00
+            });
+
+            let lineLength = 1;
+
+			let line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(point.x - lineLength, point.y , 2),
+                new THREE.Vector3(point.x + lineLength, point.y, 2)
+            ]), material);
+
+			lines[lineId] = line;
+			scene.add(line);
+        }
 
 		//
 
