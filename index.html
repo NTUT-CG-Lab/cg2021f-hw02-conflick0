@@ -96,10 +96,8 @@
 
     let raycaster = new THREE.Raycaster();
     let mouse = new THREE.Vector2();
-    let plane = new THREE.Plane();
-    let planeNormal = new THREE.Vector3();
     let point = new THREE.Vector3();
-
+    let target = [];
     let lines = {
         first: [null, null, null, null],
         second: [null, null, null, null]
@@ -181,7 +179,7 @@
 
             mesh = object;
             mesh.position.y = -10;
-
+            target.push(mesh);
             scene.add(mesh);
 
             let vpdIndex = 0;
@@ -356,10 +354,15 @@
         mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
         mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-        planeNormal.copy(camera.position).normalize();
-        plane.setFromNormalAndCoplanarPoint(planeNormal, scene.position);
         raycaster.setFromCamera(mouse, camera);
-        raycaster.ray.intersectPlane(plane, point);
+
+        let intersects = raycaster.intersectObjects(target);
+
+        if (intersects.length > 0) {
+            point.x = intersects[0].point.x;
+            point.y = intersects[0].point.y;
+            point.z = intersects[0].point.z;
+        }
     }
 
     function onKeyDown(event) {
