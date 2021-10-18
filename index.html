@@ -2,469 +2,501 @@
 <html lang="en">
 
 <head>
-	<title>three.js webgl - loaders - MMD loader</title>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-	<link type="text/css" rel="stylesheet" href="main.css">
-	<style>
-		body {
-			background-color: #fff;
-			color: #444;
-		}
+    <title>three.js webgl - loaders - MMD loader</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="main.css">
+    <style>
+        body {
+            background-color: #fff;
+            color: #444;
+        }
 
-		a {
-			color: #08f;
-		}
-	</style>
+        a {
+            color: #08f;
+        }
+    </style>
 </head>
 
 <body>
-	<div id="info">
-		<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - MMDLoader test<br />
-		<a href="https://github.com/mrdoob/three.js/tree/master/examples/models/mmd#readme" target="_blank"
-			rel="noopener">MMD Assets license</a><br />
-		Copyright
-		<a href="https://sites.google.com/view/evpvp/" target="_blank" rel="noopener">Model Data</a>
-		<a href="http://seiga.nicovideo.jp/seiga/im5162984" target="_blank" rel="noopener">Pose Data</a>
-		<div id="evalBtn"></div>
-	</div>
-
-	<script src="js/libs/ammo.wasm.js"></script>
-	<script src="scoreoutputer.min.js"></script>
-	<script>
-		// 建構子 ScoreOutputer 接受一個字串，該字串為 csv 的檔案名稱
-		// 以下面範例，檔名就為 "109598105(總分: 6).csv"
-		var so = new ScoreOutputer("110598045");
-		so.installCSS(function () {
-			// 安裝 bootstrap 的 css，如果在 html 上方引用 bootstrap 5.1.1 的話就不用使用 installCSS ，注意一定要 bootstrap css 5.1.1 版
-			// installCSS 接收一個 callback 當作參數，作為成功安裝 bootstrap css 的回呼函式
-
-			//加入項目，分數，完成狀況
-			//第一個參數為 項目名稱
-			//第2個參數為 項目分數
-			//第3個參數為 完成狀況，有完成 true/未完成 false
-			//有幾個項目就呼叫幾個 addChild
-			//addChild 要比 renderModal 先呼叫
-			so.addChild("視角可以移動及放大", 2, true);
-			so.addChild("在畫面上畫出左眼的邊框", 2, true);
-			so.addChild("複製左眼邊框變化到右眼", 2, false);
-			so.addChild("可選擇當前讀取角色或按鍵選擇上 / 下一隻角色", 1, false);
-			so.addChild("可儲存座標點檔案", 1, false);
-			so.addChild("回答問題", 2, true);
-
-			//產生自評表，參數如下所示
-			so.renderModal(
-				//1. 自評表插入位置 (預設 document.body)
-				document.body,
-				//2. 自評表背景 (預設紅色)
-				'rgba(100,45,58,1)',
-				//3. 自評表文字顏色 (預設白色)
-				'white',
-				//4. 自評表文字大小 (預設 14pt)
-				'15pt',
-				//5. 自評表 checkbox 文字大小 (預設多少忘了)
-				'15px',
-				//6. 自評表標題 (預設 "自我評分表")
-				dialogTitle = "自我評分表"
-			);
-
-			//設定下載按鈕 <-- 一定要呼叫這個函數，不然沒有下載功能
-			so.installDownloadBtn();
-
-			//產生 "開啟自評表按鈕"
-			so.renderBtn(
-				//自評表按鈕插入位置
-				document.querySelector('#evalBtn'),
-				//自評表按鈕文字
-				"開啟自評表"
-			);
-		});
-	</script>
-	<script type="module">
-
-		import * as THREE from './build/three.module.js';
-		import { GUI } from './jsm/libs/dat.gui.module.js';
-		import { OrbitControls } from './jsm/controls/OrbitControls.js';
-		import { OutlineEffect } from './jsm/effects/OutlineEffect.js';
-		import { MMDLoader } from './jsm/loaders/MMDLoader.js';
-		import { MMDAnimationHelper } from './jsm/animation/MMDAnimationHelper.js';
-
-		let camera, scene, renderer, effect;
-		let mesh, helper;
-
-		const vpds = [];
-
-        let raycaster = new THREE.Raycaster();
-        let mouse = new THREE.Vector2();
-        let plane = new THREE.Plane();
-        let planeNormal = new THREE.Vector3();
-        let point = new THREE.Vector3();
+<div id="info">
+    <a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - MMDLoader test<br/>
+    <a href="https://github.com/mrdoob/three.js/tree/master/examples/models/mmd#readme" target="_blank"
+       rel="noopener">MMD Assets license</a><br/>
+    Copyright
+    <a href="https://sites.google.com/view/evpvp/" target="_blank" rel="noopener">Model Data</a>
+    <a href="http://seiga.nicovideo.jp/seiga/im5162984" target="_blank" rel="noopener">Pose Data</a>
+    <div id="evalBtn"></div>
+</div>
+
+<script src="js/libs/ammo.wasm.js"></script>
+<script src="scoreoutputer.min.js"></script>
+<script>
+    // 建構子 ScoreOutputer 接受一個字串，該字串為 csv 的檔案名稱
+    // 以下面範例，檔名就為 "109598105(總分: 6).csv"
+    var so = new ScoreOutputer("110598045");
+    so.installCSS(function () {
+        // 安裝 bootstrap 的 css，如果在 html 上方引用 bootstrap 5.1.1 的話就不用使用 installCSS ，注意一定要 bootstrap css 5.1.1 版
+        // installCSS 接收一個 callback 當作參數，作為成功安裝 bootstrap css 的回呼函式
+
+        //加入項目，分數，完成狀況
+        //第一個參數為 項目名稱
+        //第2個參數為 項目分數
+        //第3個參數為 完成狀況，有完成 true/未完成 false
+        //有幾個項目就呼叫幾個 addChild
+        //addChild 要比 renderModal 先呼叫
+        so.addChild("視角可以移動及放大", 2, true);
+        so.addChild("在畫面上畫出左眼的邊框", 2, true);
+        so.addChild("複製左眼邊框變化到右眼", 2, true);
+        so.addChild("可選擇當前讀取角色或按鍵選擇上 / 下一隻角色", 1, false);
+        so.addChild("可儲存座標點檔案", 1, false);
+        so.addChild("回答問題", 2, true);
+
+        //產生自評表，參數如下所示
+        so.renderModal(
+            //1. 自評表插入位置 (預設 document.body)
+            document.body,
+            //2. 自評表背景 (預設紅色)
+            'rgba(100,45,58,1)',
+            //3. 自評表文字顏色 (預設白色)
+            'white',
+            //4. 自評表文字大小 (預設 14pt)
+            '15pt',
+            //5. 自評表 checkbox 文字大小 (預設多少忘了)
+            '15px',
+            //6. 自評表標題 (預設 "自我評分表")
+            dialogTitle = "自我評分表"
+        );
+
+        //設定下載按鈕 <-- 一定要呼叫這個函數，不然沒有下載功能
+        so.installDownloadBtn();
+
+        //產生 "開啟自評表按鈕"
+        so.renderBtn(
+            //自評表按鈕插入位置
+            document.querySelector('#evalBtn'),
+            //自評表按鈕文字
+            "開啟自評表"
+        );
+    });
+</script>
+<script type="module">
+
+    import * as THREE from './build/three.module.js';
+    import {GUI} from './jsm/libs/dat.gui.module.js';
+    import {OrbitControls} from './jsm/controls/OrbitControls.js';
+    import {OutlineEffect} from './jsm/effects/OutlineEffect.js';
+    import {MMDLoader} from './jsm/loaders/MMDLoader.js';
+    import {MMDAnimationHelper} from './jsm/animation/MMDAnimationHelper.js';
+
+    let camera, scene, renderer, effect;
+    let mesh, helper;
+
+    const vpds = [];
+
+    let raycaster = new THREE.Raycaster();
+    let mouse = new THREE.Vector2();
+    let plane = new THREE.Plane();
+    let planeNormal = new THREE.Vector3();
+    let point = new THREE.Vector3();
+
+    let lines = {
+        first: [null, null, null, null],
+        second: [null, null, null, null]
+    };
+
+
+    Ammo().then(function (AmmoLib) {
+
+        Ammo = AmmoLib;
+
+        init();
+        animate();
+
+    });
+
+    function init() {
+
+        const container = document.createElement('div');
+        document.body.appendChild(container);
+        let scale = 30;
+        camera = new THREE.OrthographicCamera(window.innerWidth / scale / -2, window.innerWidth / scale / 2, window.innerHeight / scale / 2, window.innerHeight / scale / -2, 0.1, 1000);
+        //camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 2000 );
+        camera.position.z = 25;
 
-		let lines = [null, null, null, null];
+        // scene
 
-		Ammo().then(function (AmmoLib) {
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xffffff);
 
-			Ammo = AmmoLib;
+        const ambient = new THREE.AmbientLight(0x666666);
+        scene.add(ambient);
 
-			init();
-			animate();
+        const directionalLight = new THREE.DirectionalLight(0x887766);
+        directionalLight.position.set(-1, 1, 1).normalize();
+        scene.add(directionalLight);
 
-		});
+        //
 
-		function init() {
+        renderer = new THREE.WebGLRenderer({antialias: true});
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(renderer.domElement);
 
-			const container = document.createElement('div');
-			document.body.appendChild(container);
-			let scale = 30;
-			camera = new THREE.OrthographicCamera(window.innerWidth / scale / - 2, window.innerWidth / scale / 2, window.innerHeight / scale / 2, window.innerHeight / scale / - 2, 0.1, 1000);
-			//camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 2000 );
-			camera.position.z = 25;
+        effect = new OutlineEffect(renderer);
 
-			// scene
+        // model
 
-			scene = new THREE.Scene();
-			scene.background = new THREE.Color(0xffffff);
+        function onProgress(xhr) {
 
-			const ambient = new THREE.AmbientLight(0x666666);
-			scene.add(ambient);
+            if (xhr.lengthComputable) {
 
-			const directionalLight = new THREE.DirectionalLight(0x887766);
-			directionalLight.position.set(- 1, 1, 1).normalize();
-			scene.add(directionalLight);
+                const percentComplete = xhr.loaded / xhr.total * 100;
+                console.log(Math.round(percentComplete, 2) + '% downloaded');
 
-			//
+            }
 
-			renderer = new THREE.WebGLRenderer({ antialias: true });
-			renderer.setPixelRatio(window.devicePixelRatio);
-			renderer.setSize(window.innerWidth, window.innerHeight);
-			container.appendChild(renderer.domElement);
-
-			effect = new OutlineEffect(renderer);
-
-			// model
-
-			function onProgress(xhr) {
-
-				if (xhr.lengthComputable) {
-
-					const percentComplete = xhr.loaded / xhr.total * 100;
-					console.log(Math.round(percentComplete, 2) + '% downloaded');
-
-				}
-
-			}
-
-			const modelFile = 'models/mmd/kizunaai/kizunaai.pmx';
-			const vpdFiles = [
-				'models/mmd/vpds/01.vpd',
-				'models/mmd/vpds/02.vpd',
-				'models/mmd/vpds/03.vpd',
-				'models/mmd/vpds/04.vpd',
-				'models/mmd/vpds/05.vpd',
-				'models/mmd/vpds/06.vpd',
-				'models/mmd/vpds/07.vpd',
-				'models/mmd/vpds/08.vpd',
-				//'models/mmd/vpds/09.vpd',
-				//'models/mmd/vpds/10.vpd',
-				'models/mmd/vpds/11.vpd'
-			];
-
-			helper = new MMDAnimationHelper();
-
-			const loader = new MMDLoader();
-
-			loader.load(modelFile, function (object) {
-
-				mesh = object;
-				mesh.position.y = - 10;
-
-				scene.add(mesh);
-
-				let vpdIndex = 0;
-
-				function loadVpd() {
-
-					const vpdFile = vpdFiles[vpdIndex];
-
-					loader.loadVPD(vpdFile, false, function (vpd) {
-
-						vpds.push(vpd);
-
-						vpdIndex++;
-
-						if (vpdIndex < vpdFiles.length) {
-
-							loadVpd();
-
-						} else {
-
-							initGui();
-
-						}
-
-					}, onProgress, null);
-
-				}
-
-				loadVpd();
-
-			}, onProgress, null);
-
-			//
-
-			window.addEventListener('resize', onWindowResize);
-            window.addEventListener('keydown', onKeyDown);
-            window.addEventListener( 'mousemove', onMouseMove);
-			//鏡頭控制
-			const cameracontrols = new OrbitControls(camera, renderer.domElement);
-			cameracontrols.minDistance = 10;
-			cameracontrols.maxDistance = 100;
-			cameracontrols.enableRotate = false;
-			function initGui() {
-
-				const gui = new GUI();
-
-				const dictionary = mesh.morphTargetDictionary;
-
-				const controls = {};
-				const keys = [];
-
-				const poses = gui.addFolder('Poses');
-				const morphs = gui.addFolder('Morphs');
-
-				function getBaseName(s) {
-
-					return s.slice(s.lastIndexOf('/') + 1);
-
-				}
-
-				function initControls() {
-
-					for (const key in dictionary) {
-
-						controls[key] = 0.0;
-
-					}
-
-					controls.pose = - 1;
-
-					for (let i = 0; i < vpdFiles.length; i++) {
-
-						controls[getBaseName(vpdFiles[i])] = false;
-
-					}
-
-				}
-
-				function initKeys() {
-
-					for (const key in dictionary) {
-
-						keys.push(key);
-
-					}
-
-				}
-
-				function initPoses() {
-
-					const files = { default: - 1 };
-
-					for (let i = 0; i < vpdFiles.length; i++) {
-
-						files[getBaseName(vpdFiles[i])] = i;
-
-					}
-
-					poses.add(controls, 'pose', files).onChange(onChangePose);
-
-				}
-
-				function initMorphs() {
-
-					for (const key in dictionary) {
-
-						morphs.add(controls, key, 0.0, 1.0, 0.01).onChange(onChangeMorph);
-
-					}
-
-				}
-
-				function onChangeMorph() {
-
-					for (let i = 0; i < keys.length; i++) {
-
-						const key = keys[i];
-						const value = controls[key];
-						mesh.morphTargetInfluences[i] = value;
-
-					}
-
-				}
-
-				function onChangePose() {
-
-					const index = parseInt(controls.pose);
-
-					if (index === - 1) {
-
-						mesh.pose();
-
-					} else {
-
-						helper.pose(mesh, vpds[index]);
-
-					}
-
-				}
-
-				initControls();
-				initKeys();
-				initPoses();
-				initMorphs();
-
-				onChangeMorph();
-				onChangePose();
-
-				poses.open();
-				morphs.open();
-
-			}
-
-		}
-
-		function onWindowResize() {
-
-			let scale = 30;
-			camera.left = window.innerWidth / scale / - 2;
-			camera.right = window.innerWidth / scale / 2;
-			camera.top = window.innerHeight / scale / 2;
-			camera.bottom = window.innerHeight / scale / - 2;
-			camera.updateProjectionMatrix();
-
-			effect.setSize(window.innerWidth, window.innerHeight);
-
-		}
-
-        function onMouseMove( event ) {
-            event.preventDefault();
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-            planeNormal.copy(camera.position).normalize();
-            plane.setFromNormalAndCoplanarPoint(planeNormal, scene.position);
-            raycaster.setFromCamera(mouse, camera);
-            raycaster.ray.intersectPlane(plane, point);
         }
 
-        function onKeyDown(event) {
-			let id;
-			switch (event.keyCode) {
-				case 49:
-					// key 1
-					id = 0;
-					if (lines[id]) removeLine(id);
-					addHorizontalLine(id);
-					break;
-				case 50:
-					// key 2
-					id = 1;
-					if (lines[id]) removeLine(id);
-					addVerticalLine(id);
-					break;
-				case 51:
-					// key 3
-					id = 2;
-					if (lines[id]) removeLine(id);
-					addHorizontalLine(id);
-					break;
-				case 52:
-					// key 4
-					id = 3;
-					if (lines[id]) removeLine(id);
-					addVerticalLine(id);
-					break;
-				case 97:
-					// key 1 (numeric keypad area)
-					id = 0;
-					if (lines[id]) removeLine(id);
-					addHorizontalLine(id);
-					break;
-				case 98:
-					// key 2 (numeric keypad area)
-					id = 1;
-					if (lines[id]) removeLine(id);
-					addVerticalLine(id);
-					break;
-				case 99:
-					// key 3 (numeric keypad area)
-					id = 2;
-					if (lines[id]) removeLine(id);
-					addHorizontalLine(id);
-					break;
-				case 100:
-					// key 4 (numeric keypad area)
-					id = 3;
-					if (lines[id]) removeLine(id);
-					addVerticalLine(id);
-					break;
+        const modelFile = 'models/mmd/kizunaai/kizunaai.pmx';
+        const vpdFiles = [
+            'models/mmd/vpds/01.vpd',
+            'models/mmd/vpds/02.vpd',
+            'models/mmd/vpds/03.vpd',
+            'models/mmd/vpds/04.vpd',
+            'models/mmd/vpds/05.vpd',
+            'models/mmd/vpds/06.vpd',
+            'models/mmd/vpds/07.vpd',
+            'models/mmd/vpds/08.vpd',
+            //'models/mmd/vpds/09.vpd',
+            //'models/mmd/vpds/10.vpd',
+            'models/mmd/vpds/11.vpd'
+        ];
 
-			}
+        helper = new MMDAnimationHelper();
+
+        const loader = new MMDLoader();
+
+        loader.load(modelFile, function (object) {
+
+            mesh = object;
+            mesh.position.y = -10;
+
+            scene.add(mesh);
+
+            let vpdIndex = 0;
+
+            function loadVpd() {
+
+                const vpdFile = vpdFiles[vpdIndex];
+
+                loader.loadVPD(vpdFile, false, function (vpd) {
+
+                    vpds.push(vpd);
+
+                    vpdIndex++;
+
+                    if (vpdIndex < vpdFiles.length) {
+
+                        loadVpd();
+
+                    } else {
+
+                        initGui();
+
+                    }
+
+                }, onProgress, null);
+
+            }
+
+            loadVpd();
+
+        }, onProgress, null);
+
+        //
+
+        window.addEventListener('resize', onWindowResize);
+        window.addEventListener('keydown', onKeyDown);
+        window.addEventListener('mousemove', onMouseMove);
+        //鏡頭控制
+        const cameracontrols = new OrbitControls(camera, renderer.domElement);
+        cameracontrols.minDistance = 10;
+        cameracontrols.maxDistance = 100;
+        cameracontrols.enableRotate = false;
+
+        function initGui() {
+
+            const gui = new GUI();
+
+            const dictionary = mesh.morphTargetDictionary;
+
+            const controls = {};
+            const keys = [];
+
+            const poses = gui.addFolder('Poses');
+            const morphs = gui.addFolder('Morphs');
+
+            function getBaseName(s) {
+
+                return s.slice(s.lastIndexOf('/') + 1);
+
+            }
+
+            function initControls() {
+
+                for (const key in dictionary) {
+
+                    controls[key] = 0.0;
+
+                }
+
+                controls.pose = -1;
+
+                for (let i = 0; i < vpdFiles.length; i++) {
+
+                    controls[getBaseName(vpdFiles[i])] = false;
+
+                }
+
+            }
+
+            function initKeys() {
+
+                for (const key in dictionary) {
+
+                    keys.push(key);
+
+                }
+
+            }
+
+            function initPoses() {
+
+                const files = {default: -1};
+
+                for (let i = 0; i < vpdFiles.length; i++) {
+
+                    files[getBaseName(vpdFiles[i])] = i;
+
+                }
+
+                poses.add(controls, 'pose', files).onChange(onChangePose);
+
+            }
+
+            function initMorphs() {
+
+                for (const key in dictionary) {
+
+                    morphs.add(controls, key, 0.0, 1.0, 0.01).onChange(onChangeMorph);
+
+                }
+
+            }
+
+            function onChangeMorph() {
+
+                for (let i = 0; i < keys.length; i++) {
+
+                    const key = keys[i];
+                    const value = controls[key];
+                    mesh.morphTargetInfluences[i] = value;
+
+                }
+
+            }
+
+            function onChangePose() {
+
+                const index = parseInt(controls.pose);
+
+                if (index === -1) {
+
+                    mesh.pose();
+
+                } else {
+
+                    helper.pose(mesh, vpds[index]);
+
+                }
+
+            }
+
+            initControls();
+            initKeys();
+            initPoses();
+            initMorphs();
+
+            onChangeMorph();
+            onChangePose();
+
+            poses.open();
+            morphs.open();
+
         }
 
-		function removeLine(lineId) {
-			lines[lineId].geometry.dispose();
-			lines[lineId].material.dispose();
-			scene.remove(lines[lineId]);
-			lines[lineId] = null;
-		}
+    }
 
-        function addHorizontalLine(lineId) {
-            const material = new THREE.LineBasicMaterial({
-                color: 0xff0000
-            });
+    function onWindowResize() {
 
-            let lineLength = 1;
-            let line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([
-                new THREE.Vector3(point.x, point.y - lineLength, 2),
-                new THREE.Vector3(point.x, point.y + lineLength, 2)
-            ]), material);
+        let scale = 30;
+        camera.left = window.innerWidth / scale / -2;
+        camera.right = window.innerWidth / scale / 2;
+        camera.top = window.innerHeight / scale / 2;
+        camera.bottom = window.innerHeight / scale / -2;
+        camera.updateProjectionMatrix();
 
-			lines[lineId] = line;
-			scene.add(line);
+        effect.setSize(window.innerWidth, window.innerHeight);
+
+    }
+
+    function onMouseMove(event) {
+        event.preventDefault();
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        planeNormal.copy(camera.position).normalize();
+        plane.setFromNormalAndCoplanarPoint(planeNormal, scene.position);
+        raycaster.setFromCamera(mouse, camera);
+        raycaster.ray.intersectPlane(plane, point);
+    }
+
+    function onKeyDown(event) {
+        switch (event.keyCode) {
+            case 49:
+                // key 1
+				onKeyNum(49);
+                break;
+            case 50:
+                // key 2
+				onKeyNum(50);
+                break;
+            case 51:
+                // key 3
+				onKeyNum(51);
+                break;
+            case 52:
+                // key 4
+				onKeyNum(52);
+                break;
+            case 97:
+                // key 1 (numeric keypad area)
+				onKeyNum(97);
+                break;
+            case 98:
+                // key 2 (numeric keypad area)
+				onKeyNum(98);
+                break;
+            case 99:
+                // key 3 (numeric keypad area)
+				onKeyNum(99);
+                break;
+            case 100:
+                // key 4 (numeric keypad area)
+				onKeyNum(100);
+                break;
+			case 81:
+				// key q (numeric keypad area)
+                mirrorLines();
+				break;
         }
+    }
 
-        function addVerticalLine(lineId) {
-            const material = new THREE.LineBasicMaterial({
-                color: 0x00ff00
-            });
+	function onKeyNum(keyCode) {
+		// keyboard area and num keypad area
+		let id = keyCode > 52 ? keyCode - 97 : keyCode - 49;
+        let lineType = 'first'
+		if (lines[lineType][id]) {
+			resetLinePosition(lineType,id, point);
+			return;
+		}
+		if (id %2 === 0) {
+			addHorizontalLine(lineType, id, point);
+			return;
+		}
+		addVerticalLine(lineType, id, point);
+	}
 
-            let lineLength = 1;
+	function mirrorLines() {
+        let mirPoint = new THREE.Vector3();
+        let type1 = 'first'
+        let type2 = 'second'
 
-			let line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([
-                new THREE.Vector3(point.x - lineLength, point.y , 2),
-                new THREE.Vector3(point.x + lineLength, point.y, 2)
-            ]), material);
+        for (let i=0; i<4; i++) {
+            // if left line not exist, don't mirror line
+            if (lines[type1][i] == null) continue;
 
-			lines[lineId] = line;
-			scene.add(line);
+            // get mirror point
+            mirPoint.set(-lines[type1][i].position.x, lines[type1][i].position.y, lines[type1][i].position.z);
+
+            // if mirror line exist, reset mirror line position
+            if(lines[type2][i]) {
+                resetLinePosition(type2, i, mirPoint);
+                continue;
+            }
+
+            // if odd num mirror line, add horizontal line, else add vertical line
+            if(i%2 === 0) addHorizontalLine(type2, i, mirPoint);
+            else addVerticalLine(type2, i, mirPoint);
         }
+    }
 
-		//
+    function resetLinePosition(lineType, lineId, pos) {
+		lines[lineType][lineId].position.set(pos.x, pos.y, 2);
+    }
 
-		function animate() {
+    function addHorizontalLine(lineType, lineId, pos) {
+        const material = new THREE.LineBasicMaterial({
+            color: lineType === 'first' ? 0xff0000 : 0x9933ff
+        });
 
-			requestAnimationFrame(animate);
-			render();
+        let lineLength = 1;
 
-		}
+        let line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(-lineLength, 0, 2),
+            new THREE.Vector3(lineLength, 0, 2)
+        ]), material);
 
-		function render() {
+        line.position.set(pos.x, pos.y, 2);
 
-			effect.render(scene, camera);
+        lines[lineType][lineId] = line;
+        scene.add(lines[lineType][lineId]);
+    }
 
-		}
-	</script>
+    function addVerticalLine(lineType, lineId, pos) {
+        const material = new THREE.LineBasicMaterial({
+            color: lineType === 'first' ? 0x00ff00 : 0x3399ff
+        });
+
+        let lineLength = 1;
+
+        let line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(0, -lineLength, 2),
+            new THREE.Vector3(0, lineLength, 2)
+        ]), material);
+
+        line.position.set(pos.x, pos.y, 2);
+
+        lines[lineType][lineId] = line;
+        scene.add(lines[lineType][lineId]);
+    }
+
+    //
+
+    function animate() {
+
+        requestAnimationFrame(animate);
+        render();
+
+    }
+
+    function render() {
+
+        effect.render(scene, camera);
+
+    }
+</script>
 
 </body>
 
